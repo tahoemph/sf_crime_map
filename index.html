@@ -6,24 +6,40 @@
     </head>
     <body>
         <script>
+            var width = 2000;
+            var height = 2000;
             var canvas = d3.select("body").append("svg")
-                .attr("height", 760)
-                .attr("width", 700);
+                .attr("height", width)
+                .attr("width", height);
 
             d3.json("data/SFFind_Neighborhoods.geojson", function(data) {
-                var group = canvas.SelectAll("g")
+                var center = d3.geo.centroid(data);
+                var group = canvas.selectAll("g")
                     .data(data.features)
                     .enter()
-                    .append("g")
+                    .append("g");
 
-                var projection = d3.geo.mercator().scale(7300).translate([0, 1980]);
-                var path = d3.geo.path.projection(projection);
+                // Rube would be happy.  Build this from the data instead of
+                // ad hoc.  Probably do this iteratively by looking at the bounds
+                // after creating the path and then updating the bounds, scale
+                // and offset from that.
+                var projection = d3.geo.mercator()
+                    .scale(450000)
+                    .center(center)
+                    .translate([width/2, height/2]);
+                var path = d3.geo.path().projection(projection);
 
                 var areas = group.append("path")
                     .attr("d", path)
                     .attr("class", "area")
                     .attr("fill", "steelblue");
-            }
+
+                group.append("text")
+                    .attr("x", function(d) { return path.centroid(d)[0]; })
+                    .attr("y", function(d) { return path.centroid(d)[1]; })
+                    .attr("text-anchor", "middle")
+                    .text(function(d) { return d.properties.name; })
+            });
         </script>
     </body>
 </html>
